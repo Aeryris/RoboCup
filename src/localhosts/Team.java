@@ -11,6 +11,9 @@ public class Team implements TeamInterface{
 	//Player.class
 	public HashMap<Integer, Player> players = new HashMap<Integer, Player>();
 	
+	
+	
+	
 	private static Team instance = null;
 	
 	
@@ -33,6 +36,16 @@ public class Team implements TeamInterface{
 	public Player get(int playerId){
 		return players.get(playerId);
 	}
+	
+	public void play(){
+		
+	}
+	
+	
+	
+	
+	
+	
 	
 	
 }

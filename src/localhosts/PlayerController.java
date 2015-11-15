@@ -49,9 +49,7 @@ public class PlayerController implements ControllerPlayer {
 	
 	private boolean beforeKickOff = true;
 	
-	public void lookAction(){
-		
-	}
+	
 	
 	
 
@@ -78,7 +76,11 @@ public class PlayerController implements ControllerPlayer {
 		if(this.beforeKickOff) return;
 		// TODO Auto-generated method stub
 		//this.getPlayer().dash(100);
-		/**if(this.canSeeBall){
+		//getPlayer().turn(1);
+		//getPlayer().dash(100);
+		//getPlayer().kick(-100, 1);
+		
+		/** if(this.canSeeBall){
 			//getPlayer().turn(90);
 			getPlayer().dash(100);
 			getPlayer().kick(100, -90);
@@ -86,6 +88,8 @@ public class PlayerController implements ControllerPlayer {
 			getPlayer().turn(90);
 			getPlayer().dash(50);
 		} */
+		
+		//team.play()
 			
 			
 	}
@@ -184,7 +188,7 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagGoalOther(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		//team.get(this.getPlayer().getNumber()).getController().
 	}
 
 	@Override
@@ -205,14 +209,33 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeePlayerOwn(int number, boolean goalie, double distance, double direction, double distChange,
 			double dirChange, double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		/**
+		 * [*]
+		 * [1]
+		 * [2] -> findBall() ? LookAroud (canSeeBall = true) : AskWhoCanSeeTheBall()->6->chasePlayerId(6)
+		 * [3]
+		 * [4]
+		 * [5]
+		 * [6] canSeeBall = true
+		 * [7]
+		 * [8]
+		 * [9]
+		 * [10]
+		 */
+				
 	}
 
 	@Override
 	public void infoSeeBall(double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		this.canSeeBall = true;
+		//this.canSeeBall = true;
+		team.get(this.getPlayer().getNumber()).getController().canSeeBall = true;
+		//team.say(this.getPlayer().getNumber(), "SeeBall");
+		Messages.inbox().say(1, "Heard");
+		
+		
+		
 	}
 
 	@Override
@@ -235,21 +258,23 @@ public class PlayerController implements ControllerPlayer {
 			this.beforeKickOff = false;
 		}
 		
+		int playerId = this.getPlayer().getNumber();
+		
 		/**
 		 * Create team member
 		 */
-		Player player = new Player(this, this.getPlayer().getNumber());
+		Player player = new Player(this, playerId);
 		
 		/**
 		 * Add player to the team
 		 */
-		team.addTeamMember(this.getPlayer().getNumber(), player);
+		team.addTeamMember(playerId, player);
 		
 		/**
 		 * Position players on the pitch
 		 */
 		//PositionPlayers positionPlayers = new PositionPlayers(this, playMode, this.getPlayer().getNumber());
-		Formation formation = new Formation(this.getPlayer().getNumber(), playMode);
+		Formation formation = new Formation(playerId, playMode);
 		
 		
 		
@@ -258,6 +283,9 @@ public class PlayerController implements ControllerPlayer {
 	@Override
 	public void infoHearPlayer(double direction, String message) {
 		// TODO Auto-generated method stub
+		
+		Messages.inbox().hear(this.getPlayer().getNumber(), message);
+		//team.hear(this.getPlayer().getNumber(), message);
 		
 	}
 
