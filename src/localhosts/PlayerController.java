@@ -75,11 +75,33 @@ public class PlayerController implements ControllerPlayer {
 	public void postInfo() {
 		if(this.beforeKickOff) return;
 		// TODO Auto-generated method stub
-		//this.getPlayer().dash(100);
-		//getPlayer().turn(1);
-		//getPlayer().dash(100);
-		//getPlayer().kick(-100, 1);
 		
+		
+		int playerId = this.getPlayer().getNumber();
+		
+		this.postInfoAttackers();
+		
+		/** switch(team.get(playerId).getRole()){
+		case Attacker:
+			this.postInfoAttackers();
+			break;
+		case Defender:
+			this.postInfoDefenders();
+			break;
+		case Goalie:
+			break;
+		case MidFielders:
+			this.postInfoMidFielders();
+			break;
+		default:
+			break;
+		
+		}*/
+		
+		
+		
+		
+		/*
 		 if(this.canSeeBall){
 			//getPlayer().turn(90);
 			getPlayer().dash(100);
@@ -87,7 +109,7 @@ public class PlayerController implements ControllerPlayer {
 		}else{
 			getPlayer().turn(90);
 			getPlayer().dash(50);
-		} 
+		} */
 		
 		//team.play()
 		
@@ -100,6 +122,66 @@ public class PlayerController implements ControllerPlayer {
 			
 			
 	}
+	
+	private void postInfoAttackers(){
+		
+		int playerId = this.getPlayer().getNumber();
+		
+		System.out.println("#####################################################");
+		System.out.println("#####################################################");
+		System.out.println("#####################################################");
+		System.out.println(team.lastPlayerIdSeenBall);
+		System.out.println("#####################################################");
+		System.out.println("#####################################################");
+		System.out.println("#####################################################");
+		
+		
+		if(team.get(playerId).getBall() == null){
+			System.out.println("####################################################################################GET BALL NULL" + playerId);
+			//return;
+		}
+		
+		if(playerId == 8){
+			
+			//System.out.println("####DISTANCE8: " + team.get(playerId).getBall().distance);
+			team.get(playerId).getController().getPlayer().dash(55);
+			team.get(playerId).getController().getPlayer().turn(team.get(playerId).getBall().direction);
+			if(team.get(playerId).getBall().distance < 1){
+				
+				team.get(playerId).getController().getPlayer().kick(100, -80);
+				team.get(playerId).getController().getPlayer().dash(0);
+			}else{
+				
+			}
+		}
+		
+		//Middle attacker
+		if(playerId == 4){
+			
+			
+			//System.out.println("####DISTANCE4: " + team.get(playerId).getBall().distance);
+			if(team.get(playerId).getBall().distance < 1){
+				team.get(playerId).getController().getPlayer().kick(100, -90);
+				team.get(playerId).getController().getPlayer().dash(0);
+			}else{
+				team.get(playerId).getController().getPlayer().dash(100);
+			}
+			
+			
+			
+		}
+		
+		
+	}
+	
+	private void postInfoDefenders(){
+		
+	}
+	
+	private void postInfoMidFielders(){
+		
+	}
+	
 
 	@Override
 	public ActionsPlayer getPlayer() {
@@ -243,7 +325,17 @@ public class PlayerController implements ControllerPlayer {
 		
 		int playerId = this.getPlayer().getNumber();
 		
-		SeeBall ball = new SeeBall();
+		
+		
+		SeeBall ball;
+		
+		if(team.get(playerId).getBall() == null){
+			ball = new SeeBall();
+		}else{
+			ball = team.get(playerId).getBall();
+		}
+		
+		
 		ball.distance = distance;
 		ball.direction = direction;
 		ball.distChange = distChange;
@@ -252,6 +344,9 @@ public class PlayerController implements ControllerPlayer {
 		ball.headFacingDirection = headFacingDirection;
 		
 		team.get(playerId).setSeeBall(ball);
+		//team.get(playerId).canSeeBall = true;
+		
+		team.lastPlayerIdSeenBall = playerId;	
 		
 	}
 
@@ -286,6 +381,11 @@ public class PlayerController implements ControllerPlayer {
 		 * Add player to the team
 		 */
 		team.addTeamMember(playerId, player);
+		
+		/**
+		 * Set player role
+		 */
+		team.autoAssignPlayerRole(playerId);
 		
 		/**
 		 * Position players on the pitch

@@ -44,6 +44,7 @@ public class Formation {
 		case 7:
 		case 8:
 			this.positionAttackers(playerId);
+			//team.get(playerId).setRole(PlayerRole.Attacker);
 			break;
 
 		// Midfielders
