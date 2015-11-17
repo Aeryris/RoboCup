@@ -125,6 +125,23 @@ public class Player{
 	 */
 	public PlayerController controller;
 	
+	public PlayerType type;
+	
+	public PlayerParam param;
+	
+	public SenseBody body;
+	
+	public SeeBall ball;
+	
+	/**
+	 * Player position X
+	 */
+	double positionX;
+	
+	/**
+	 * Player position Y
+	 */
+	double positionY;
 	
 	/**
 	 * Create new player with the controller and playerId
@@ -192,6 +209,40 @@ public class Player{
 	public Actions action(){
 		return this.actions;
 	}
+	
+	
+	public void setPlayerType(PlayerType type){
+		this.type = type;
+	}
+	
+	public PlayerType getType(){
+		return this.type;
+	}
+	
+	public void setPlayerParam(PlayerParam param){
+		this.param = param;
+	}
+	
+	public PlayerParam getParam(){
+		return this.param;
+	}
+	
+	public void setSenseBody(SenseBody body){
+		this.body = body;
+	}
+	
+	public SenseBody getBody(){
+		return this.body;
+	}
+	
+	public void setSeeBall(SeeBall ball){
+		this.ball = ball;
+	}
+	
+	public SeeBall getBall(){
+		return this.ball;
+	}
+	
 	
 	/**
 	 * Set default dummy settings

@@ -80,16 +80,23 @@ public class PlayerController implements ControllerPlayer {
 		//getPlayer().dash(100);
 		//getPlayer().kick(-100, 1);
 		
-		/** if(this.canSeeBall){
+		 if(this.canSeeBall){
 			//getPlayer().turn(90);
 			getPlayer().dash(100);
 			getPlayer().kick(100, -90);
 		}else{
 			getPlayer().turn(90);
 			getPlayer().dash(50);
-		} */
+		} 
 		
 		//team.play()
+		
+		try {
+			Debugger.object(team.get(this.getPlayer().getNumber()).getBody(), 10);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 			
 			
 	}
@@ -230,11 +237,21 @@ public class PlayerController implements ControllerPlayer {
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
 		//this.canSeeBall = true;
-		team.get(this.getPlayer().getNumber()).getController().canSeeBall = true;
+		//team.get(this.getPlayer().getNumber()).getController().canSeeBall = true;
 		//team.say(this.getPlayer().getNumber(), "SeeBall");
-		Messages.inbox().say(1, "Heard");
+		//Messages.inbox().say(1, "Heard");
 		
+		int playerId = this.getPlayer().getNumber();
 		
+		SeeBall ball = new SeeBall();
+		ball.distance = distance;
+		ball.direction = direction;
+		ball.distChange = distChange;
+		ball.dirChange = dirChange;
+		ball.bodyFacingDirection = bodyFacingDirection;
+		ball.headFacingDirection = headFacingDirection;
+		
+		team.get(playerId).setSeeBall(ball);
 		
 	}
 
@@ -313,6 +330,33 @@ public class PlayerController implements ControllerPlayer {
 			int turnCount, int sayCount, int turnNeckCount, int catchCount, int moveCount, int changeViewCount) {
 		// TODO Auto-generated method stub
 		
+		try{
+			SenseBody sense = new SenseBody();
+			sense.viewQuality = viewQuality;
+			sense.viewAngle = viewAngle;
+			sense.stamina = stamina;
+			sense.unknown = unknown;
+			sense.effort = effort;
+			sense.speedAmount = speedAmount;
+			sense.speedDirection = speedDirection;
+			sense.headAngle = headAngle;
+			sense.kickCount = kickCount;
+			sense.dashCount = dashCount;
+			sense.turnCount = turnCount;
+			sense.sayCount = sayCount;
+			sense.turnNeckCount = turnNeckCount;
+			sense.catchCount = catchCount;
+			sense.moveCount = moveCount;
+			sense.changeViewCount = changeViewCount;
+			
+			int playerId = this.getPlayer().getNumber();
+			team.get(playerId).setSenseBody(sense);
+		}catch(Exception e){
+			System.out.println(e.toString());
+		}
+		
+		
+		
 	}
 
 	@Override
@@ -333,6 +377,25 @@ public class PlayerController implements ControllerPlayer {
 			double extraStamina, double effortMax, double effortMin) {
 		// TODO Auto-generated method stub
 		
+		PlayerType type = new PlayerType();
+		type.id = id;
+		type.playerSpeedMax = playerSpeedMax;
+		type.staminaIncMax = staminaIncMax;
+		type.playerDecay = playerDecay;
+		type.inertiaMoment = inertiaMoment;
+		type.dashPowerRate = dashPowerRate;
+		type.playerSize = playerSize;
+		type.kickableMargin = kickableMargin;
+		type.kickRand = kickRand;
+		type.extraStamina = extraStamina;
+		type.effortMax = effortMax;
+		type.effortMin = effortMin;
+		
+		int playerId = this.getPlayer().getNumber();
+		
+		team.get(playerId).setPlayerType(type);
+		
+		
 	}
 
 	@Override
@@ -344,6 +407,34 @@ public class PlayerController implements ControllerPlayer {
 			double playerDecayDeltaMin, double playerTypes, double ptMax, double randomSeed,
 			double staminaIncMaxDeltaFactor, double subsMax) {
 		// TODO Auto-generated method stub
+		
+		PlayerParam param = new PlayerParam();
+		param.allowMultDefaultType = allowMultDefaultType;
+		param.dashPowerRateDeltaMax = dashPowerRateDeltaMax;
+		param.dashPowerRateDeltaMin = dashPowerRateDeltaMin;
+		param.effortMaxDeltaFactor =  effortMaxDeltaFactor;
+		param.effortMinDeltaFactor = effortMinDeltaFactor;
+		param.extraStaminaDeltaMax = extraStaminaDeltaMax;
+		param.extraStaminaDeltaMin = extraStaminaDeltaMin;
+		param.inertiaMomentDeltaFactor = inertiaMomentDeltaFactor;
+		param.kickRandDeltaFactor = kickRandDeltaFactor;
+		param.kickableMarginDeltaMax = kickableMarginDeltaMax;
+		param.kickableMarginDeltaMin = kickableMarginDeltaMin;
+		param.newDashPowerRateDeltaMax = newDashPowerRateDeltaMax;
+		param.newDashPowerRateDeltaMin = newDashPowerRateDeltaMin;
+		param.newStaminaIncMaxDeltaFactor = newStaminaIncMaxDeltaFactor;
+		param.playerDecayDeltaMax = playerDecayDeltaMax;
+		param.playerDecayDeltaMin = playerDecayDeltaMin;
+		param.playerTypes = playerTypes;
+		param.ptMax = ptMax;
+		param.randomSeed = randomSeed;
+		param.staminaIncMaxDeltaFactor = staminaIncMaxDeltaFactor;
+		param.subsMax = subsMax;
+		
+		int playerId = this.getPlayer().getNumber();
+		
+		team.get(playerId).setPlayerParam(param);
+		
 		
 	}
 
