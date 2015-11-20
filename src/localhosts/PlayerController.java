@@ -46,11 +46,36 @@ public class PlayerController implements ControllerPlayer {
 	private boolean canSeeGoal;
 	private boolean canSeeBall;
 	private boolean canSeeNothing;
+	double canSeePlayerDirection;
 	
 	private boolean beforeKickOff = true;
 	
+	boolean canOpponentSide = true;
+	double opponentSideDistance;
+	double opponentSideDirection;
+	
+	boolean canSeeOwnSide = true;
+	double ownSideDistance;
+	double ownSideDirection;
+	
+	double opponentGoalDistance;
+	double ownPlayerDistance;
+	
+	boolean heardMessageStartChase;
+
 	
 	
+	SeeBall ballInfo = new SeeBall();
+	
+	int[] seeOwnPlayers;
+	
+	double closestOwnPlayerDistance = 1000;
+	int closestOwnPlayerId = 0;
+	double closestOwnPlayerDirection = 0;
+	
+	int seeOwnPlayer = 0;
+	boolean canSeeOwnPlayer = false;
+
 	
 
 	@Override
@@ -68,59 +93,293 @@ public class PlayerController implements ControllerPlayer {
 		this.canSeeBall = false;
 		this.canSeeNothing = false;
 		
+		
 	
 	}
 
 	@Override
 	public void postInfo() {
 		if(this.beforeKickOff) return;
-		// TODO Auto-generated method stub
-		
-		
-		int playerId = this.getPlayer().getNumber();
-		
-		this.postInfoAttackers();
-		
-		/** switch(team.get(playerId).getRole()){
-		case Attacker:
-			this.postInfoAttackers();
-			break;
-		case Defender:
-			this.postInfoDefenders();
-			break;
-		case Goalie:
-			break;
-		case MidFielders:
-			this.postInfoMidFielders();
-			break;
-		default:
-			break;
-		
-		}*/
-		
-		
-		
-		
-		/*
-		 if(this.canSeeBall){
-			//getPlayer().turn(90);
-			getPlayer().dash(100);
-			getPlayer().kick(100, -90);
-		}else{
-			getPlayer().turn(90);
-			getPlayer().dash(50);
-		} */
-		
-		//team.play()
-		
-		try {
-			Debugger.object(team.get(this.getPlayer().getNumber()).getBody(), 10);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
+		try{
+			int playerId = this.getPlayer().getNumber();
+			
+			
+			if(playerId == 9){
+				
+				//System.out.println("HeardMessage " + heardMessageStartChase);
+				if(!heardMessageStartChase){
+					
+					if(canSeeBall){
+						
+						
+						if(ballDistance > 4){
+							getPlayer().turn(ballDirection);
+							getPlayer().dash(100);
+						}
+						
+						if(playerId == 9){
+							System.out.println("BallDistance -> " + ballDistance);
+							System.out.println("seeOwnPlayer -> " + seeOwnPlayer);
+							System.out.println("canSeePlayerDirection -> " + canSeePlayerDirection);
+							System.out.println("ownPlayerDistance -> " + ownPlayerDistance);
+							
+							
+							System.out.println("CanSeeOwnSide: " + canSeeOwnSide);
+							System.out.println("CanSeeOpponentSide: " + canOpponentSide);
+							
+							System.out.println("OwnSideDist: " + ownSideDistance);
+							System.out.println("OpponentSideDist: " + opponentSideDistance);
+							
+							System.out.println("OwnSideDirection: " + ownSideDirection);
+							System.out.println("OpponentSideDir: " + opponentSideDirection);
+						}
+						
+						
+						if(ballDistance <= 4){
+							System.out.println("BallInKickableDistance");
+							if(seeOwnPlayer == 7 || seeOwnPlayer == 2 || seeOwnPlayer == 3 || seeOwnPlayer == 6){
+								System.out.println("CanSee 7, 2, 3, 6");
+								/**
+								 * Searches for player -> but kick in the wrong direction
+								 */
+								
+								
+								getPlayer().turn(canSeePlayerDirection);
+								getPlayer().kick(100, 0);
+								
+								System.out.println("Kick");
+							}else{
+								System.out.println("Cannot find support player");
+								
+								/**
+								 * If he cannot see the player
+								 * Depending on where the player who has the ball is 
+								 * 	if
+								 */
+								//getPlayer().changeViewMode(ViewQuality.HIGH, ViewAngle.NARROW);
+								//getPlayer().kick(10, canSeePlayerDirection);
+								//getPlayer().turn(30);
+								
+								//if he cannot find own player, kick (10) towards opponent flag and dash
+								//
+								
+								//if(canSeeOwnSide)
+								
+								/**
+								 * Add search for player
+								 */
+								if(canSeeOwnSide && ownSideDistance < 50){
+									System.out.println("CanSeeOwnSide && OwnSideDistance");
+								//Kick it -> ownSideDirection
+								if(ballDistance <= 0.7){
+									
+									if(seeOwnPlayer == 7 || seeOwnPlayer == 2 || seeOwnPlayer == 3 || seeOwnPlayer == 6){
+										
+										getPlayer().kick(100, canSeePlayerDirection);
+										
+									}else{
+										getPlayer().turn(40);
+										getPlayer().kick(100, opponentSideDirection);
+										getPlayer().dash(100);
+									}
+									
+									
+								}else{
+									getPlayer().turn(ballDirection);
+									getPlayer().dash(10);
+								}
+								
+							}else{
+								System.out.println("KickKick");
+								if(ownSideDirection != 0.0 && ownSideDistance != 0.0){
+									if(ballDistance <= 0.7){
+										getPlayer().kick(10, ownSideDirection);
+									}else{
+										getPlayer().turn(ballDirection);
+										getPlayer().dash(100);
+									}
+									
+									
+								}else{
+									if(ballDistance <= 0.7){
+										getPlayer().kick(10, opponentSideDirection);
+									}else{
+										getPlayer().turn(ballDirection);
+										getPlayer().dash(100);
+									}
+								}
+								
+							} 
+								
+								
+								/*
+								if(canSeeOwnSide && ownSideDistance > opponentSideDistance){
+									getPlayer().kick(100, ownSideDirection);
+								}else{
+									getPlayer().kick(10, ownSideDirection);
+									getPlayer().turn(ownSideDirection);
+									getPlayer().dash(10);
+								}
+								
+								if(canOpponentSide && opponentSideDistance < 50){
+									getPlayer().kick(10, opponentSideDirection);
+									getPlayer().turn(opponentSideDirection);
+									getPlayer().dash(10);
+								}else{
+									
+								}
+								
+								if(canOpponentSide && opponentSideDistance > ownSideDistance){
+									getPlayer().kick(10, opponentSideDirection);
+									getPlayer().turn(opponentSideDirection);
+									getPlayer().dash(10);
+								}else{
+									
+								}
+								*/
+								
+								
+								
+								
+								if(canSeeOwnSide){
+									//getPlayer().kick(100, 0);
+								}
+								
+								
+							}	
+						}
+
+					}else{
+						
+						/**if(canSeeOwnSide && ownSideDistance < 50){
+							//Kick it -> ownSideDirection
+							if(ballDistance <= 0.7){
+								getPlayer().kick(100, ownSideDirection);
+							}else{
+								getPlayer().turn(ballDirection);
+								getPlayer().dash(10);
+							}
+							
+						}else{
+							getPlayer().kick(10, ownSideDirection);
+							getPlayer().turn(ownSideDirection);
+							getPlayer().dash(10);
+						} */
+						
+						getPlayer().turn(40);
+						getPlayer().changeViewMode(ViewQuality.HIGH, ViewAngle.NORMAL);
+					}
+					
+					
+					
+				}
+				
+			}
+			
+			
+			
+			if(playerId == 4){ //|| playerId == 3 || playerId == 2){ //MidAttackers
+				
+				
+				if(canSeeOwnSide && ownGoalDistance < 50 && ballDistance < 1){
+					
+					//System.out.println("Closest player: "+ closestOwnPlayerId);
+					
+					if(seeOwnPlayer == 8){
+						getPlayer().turn(canSeePlayerDirection);
+					}else{
+						getPlayer().turn(20);
+					}
+					
+				}
+				
+				
+				/**
+				 * If opponent goal distance is > 45 and can see opponents side,
+				 * turn towards our side and pass to own player
+				 */
+				if(canOpponentSide && opponentGoalDistance > 45 && ballDistance < 1){ //canSeeOppositeSide && Distance to the goal is > 
+					getPlayer().turn(-180);
+					
+					//infoSeePlayerOwn -> direction -> kick
+					
+					canOpponentSide = false;
+					oponentGoalDistance = -1;
+					
+				}
+				
+				if(canSeeBall){ 
+					//System.out.println("Player: " + playerId + " -> canSeeBall -> " + ballDistance);
+					
+					//Turn towards ballDirection
+					//Dash towards ballDirection
+					
+					getPlayer().turn(ballDirection);
+					getPlayer().dash(100);
+
+					if(ballDistance < 5){
+						//Kick
+						//getPlayer().turn(getPlayer());
+						getPlayer().kick(100, -180);
+						heardMessageStartChase = true;
+						//getPlayer().say("p9");
+						
+					}
+
+				}
+				
+				
+				
+				
+				
+			}
+			
+			
+			
+			
+		}catch(Exception e){
+			
 		}
-			
-			
+		
+	}
+	
+	public double lookForPlayer(int seePlayerId, int playerToLookFor, int whoShouldLook){
+		System.out.println("LookForPlayer: " + seePlayerId + " -> " + playerToLookFor + " -> " + whoShouldLook);
+		if(getPlayer().getNumber() == whoShouldLook){
+			if(seePlayerId == playerToLookFor){
+				return 1;
+			}else{
+				System.out.println("Cant see: "+playerToLookFor + " so turn" );
+				getPlayer().turn(45);
+			}
+		}
+		
+		return 0;
+	}
+	
+	public void getTheBall(){
+		turnTowardsBall();
+		getPlayer().dash(100);
+	}
+	
+	public void kickBall(int playerId){
+		if(ballInfo.distance < 5 && ballInfo.distance != 0.0){
+			//getPlayer().kick(100, -180);
+			//System.out.println("KickBall "+ playerId);
+		}
+	}
+	
+	public void kickTowards(int playerId, double direction, int power){
+		if(ballInfo.distance < 0.7 && ballInfo.distance != 0.0){
+			//getPlayer().kick(power, direction);
+			System.out.println("KickTowards "+ playerId + " dir: " + direction + " power: " + power);
+		}
+	}
+	
+	public void turnTowardsBall(){
+		System.out.println("TurnTowardsBall: " + ballInfo.direction);
+		getPlayer().turn(ballInfo.direction);
 	}
 	
 	private void postInfoAttackers(){
@@ -221,13 +480,32 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagOwn(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		canSeeOwnSide = true;
+		canOpponentSide = false;
+		ownSideDistance = distance;
+		ownSideDirection = direction;
 	}
 
 	@Override
 	public void infoSeeFlagOther(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
+//		if(getPlayer().getNumber() == 4 
+//				|| getPlayer().getNumber() == 3 || getPlayer().getNumber() == 2)
+//		System.out.println("CanSeeFlag PlayerId: " + getPlayer().getNumber() + " -> " + flag);
+//		
+		
+		//canSeeOwnSide = true;
+		//ownSideDistance = distance;
+		//ownSideDirection = direction;
+		
+		canOpponentSide = true;
+		canSeeOwnSide = false;
+		
+		
+		opponentSideDirection = direction;
+		opponentSideDistance = distance;
+		
 		
 	}
 
@@ -270,7 +548,9 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagGoalOwn(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		canSeeOwnSide = true;
+		canOpponentSide = false;
+		ownGoalDistance = distance;
 	}
 
 	@Override
@@ -278,6 +558,13 @@ public class PlayerController implements ControllerPlayer {
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
 		//team.get(this.getPlayer().getNumber()).getController().
+		canOpponentSide = true;
+		canSeeOwnSide = false;
+		opponentGoalDistance = distance;
+//		if(getPlayer().getNumber() == 4 
+//		|| getPlayer().getNumber() == 3 || getPlayer().getNumber() == 2)
+//System.out.println("CanSeeFlag PlayerId: " + getPlayer().getNumber() + " -> " + flag + " --> " + distance);
+
 	}
 
 	@Override
@@ -291,13 +578,44 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeePlayerOther(int number, boolean goalie, double distance, double direction, double distChange,
 			double dirChange, double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("OtherPlayer: " + number);
 	}
 
 	@Override
 	public void infoSeePlayerOwn(int number, boolean goalie, double distance, double direction, double distChange,
 			double dirChange, double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
+		
+		//closestOwnPlayerDistance = 1000;
+		//closestOwnPlayerId = number;
+		if(distance < closestOwnPlayerDistance){
+			closestOwnPlayerDistance = distance;
+			closestOwnPlayerId = number;
+			closestOwnPlayerDirection = direction;
+			
+		}
+		
+		seeOwnPlayer = number;
+		canSeePlayerDirection = direction;
+		canSeeOwnPlayer = true;
+		ownPlayerDistance = distance;
+		
+		if(getPlayer().getNumber() == 4){
+			//System.out.println("CanSeeOwnPlayer: 4 -> " + number);
+		}
+		
+		//if(ballInfo.distance < 0.7 && ballInfo.distance != 0.0)
+		//	getPlayer().kick(100, direction);
+	    
+		
+		
+		
+		
+		
+		int playerId = getPlayer().getNumber();
+		//if(playerId == 4)
+		//	System.out.println("SeeOwnPlayer: " + playerId +  " -> " + number + " = " + distance + " ~ " + direction);
+		
 		/**
 		 * [*]
 		 * [1]
@@ -318,13 +636,38 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeBall(double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		//this.canSeeBall = true;
-		//team.get(this.getPlayer().getNumber()).getController().canSeeBall = true;
-		//team.say(this.getPlayer().getNumber(), "SeeBall");
-		//Messages.inbox().say(1, "Heard");
+
 		
+		canSeeBall = true;
+		ballDirection = direction;
+		ballDistance = distance;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/**
 		int playerId = this.getPlayer().getNumber();
 		
+		canSeeBall = true;
+		
+		ballInfo.distance = distance;
+		ballInfo.direction = direction;
+		ballInfo.distChange = distChange;
+		ballInfo.dirChange = dirChange;
+		ballInfo.bodyFacingDirection = bodyFacingDirection;
+		ballInfo.headFacingDirection = headFacingDirection;
+		
+		this.ballDirection = direction;
+		this.ballDistance = distance;]
+		*/
+		/*
 		
 		
 		SeeBall ball;
@@ -343,10 +686,13 @@ public class PlayerController implements ControllerPlayer {
 		ball.bodyFacingDirection = bodyFacingDirection;
 		ball.headFacingDirection = headFacingDirection;
 		
+		ballInfo = ball;
 		team.get(playerId).setSeeBall(ball);
 		//team.get(playerId).canSeeBall = true;
+		 * 
+		 */
 		
-		team.lastPlayerIdSeenBall = playerId;	
+		//team.lastPlayerIdSeenBall = playerId;	
 		
 	}
 
@@ -393,6 +739,12 @@ public class PlayerController implements ControllerPlayer {
 		//PositionPlayers positionPlayers = new PositionPlayers(this, playMode, this.getPlayer().getNumber());
 		Formation formation = new Formation(playerId, playMode);
 		
+		if(playerId == 2){
+			getPlayer().turn(-15);
+		}
+		if(playerId == 3){
+			getPlayer().turn(15);
+		}
 		
 		
 	}
@@ -401,8 +753,11 @@ public class PlayerController implements ControllerPlayer {
 	public void infoHearPlayer(double direction, String message) {
 		// TODO Auto-generated method stub
 		
-		Messages.inbox().hear(this.getPlayer().getNumber(), message);
+		//Messages.inbox().hear(this.getPlayer().getNumber(), message);
 		//team.hear(this.getPlayer().getNumber(), message);
+		
+		if(message.equals("p9"))
+			heardMessageStartChase = true;
 		
 	}
 

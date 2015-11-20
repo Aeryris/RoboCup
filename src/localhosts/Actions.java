@@ -127,12 +127,14 @@ interface ActionsInterface{
 	 * Dash in direction
 	 * @param xy
 	 */
-	void dashInDirection(double xy);
+	public void dashInDirection(int xy, int power);
+	public void dashInDirection(double xy, int power);
 	
 	/**
 	 * Turn in direction
 	 * @param xy
 	 */
+	void turnInDirection(int xy);
 	void turnInDirection(double xy);
 	
 	
@@ -145,6 +147,11 @@ public class Actions implements ActionsInterface{
 	 * Player ID
 	 */
 	public int currentPlayerId;
+	
+	/**
+	 * Team
+	 */
+	public Team team = Team.getTeam();
 	
 	/**
 	 * Constructor
@@ -302,6 +309,13 @@ public class Actions implements ActionsInterface{
 	public void chaseBall(int[] playerIds, int numberOfChasers) {
 		// TODO Auto-generated method stub
 		
+		
+		for (int i = 0; i < playerIds.length; i++) {
+			int ids = playerIds[i];
+			//team.get(ids).getController().getPlayer()
+		}
+		
+		
 	}
 
 	/**
@@ -349,8 +363,17 @@ public class Actions implements ActionsInterface{
 	 * @param xy
 	 */
 	@Override
-	public void dashInDirection(double xy) {
+	public void dashInDirection(int xy, int power) {
 		// TODO Auto-generated method stub
+		this.turnInDirection(xy);
+		team.get(currentPlayerId).getController().getPlayer().dash(power);
+		
+	}
+	
+	public void dashInDirection(double xy, int power) {
+		// TODO Auto-generated method stub
+		this.turnInDirection(xy);
+		team.get(currentPlayerId).getController().getPlayer().dash(power);
 		
 	}
 
@@ -359,9 +382,24 @@ public class Actions implements ActionsInterface{
 	 * @param xy
 	 */
 	@Override
+	public void turnInDirection(int xy) {
+		// TODO Auto-generated method stub
+		team.get(currentPlayerId).getController().getPlayer().dash((int) xy);
+	}
+	
 	public void turnInDirection(double xy) {
 		// TODO Auto-generated method stub
-		
+		team.get(currentPlayerId).getController().getPlayer().dash((int) xy);
+	}
+	
+	public void turnTowardsBall(double direction){
+		System.out.println("TurnTowardsBall PlayerId: " + currentPlayerId + " direction: " + direction);
+		team.get(currentPlayerId).getController().getPlayer().turn(direction);
+	}
+	
+	public void turnTowardsBall(double direction, int playerId){
+		System.out.println("TurnTowardsBall PlayerId: " + currentPlayerId + " direction: " + direction);
+		team.get(playerId).getController().getPlayer().turn(direction);
 	}
 	
 	

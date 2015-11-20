@@ -90,6 +90,7 @@ public class Formation {
 		
 		team.get(playerId).setRole(PlayerRole.Attacker);
 		team.get(playerId).getController().getPlayer().move(position.get("x"), position.get("y"));
+		
 	}
 	
 	public void positionMidfielders(int playerId){
@@ -98,7 +99,7 @@ public class Formation {
 		
 		switch(playerId){
 		case 4:
-			position.put("x", -13);
+			position.put("x", -10);//-13
 			position.put("y", 0);
 			break;
 		case 5:

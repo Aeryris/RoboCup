@@ -133,6 +133,8 @@ public class Player{
 	
 	public SeeBall ball;
 	
+	public boolean shouldChaseBall = false;
+	
 	/**
 	 * Player position X
 	 */

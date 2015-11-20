@@ -12,12 +12,14 @@ import java.lang.reflect.Type;
 public class Debugger {
  
 	// show info about an object on the console
-	public static void object(Object ob, int depthWant) throws Exception {
- 
+	public static void object(Object ob, int depthWant, int playerId) throws Exception {
+		int id = playerId;
 		Class<?> c = ob.getClass();
- 
-		System.out.println("OBJECT INFO");
-		System.out.println("-----------");
+		System.out.println("####################################################################################################################");
+		System.out.println("####################################################################################################################");
+		
+		System.out.println("OBJECT INFO: PLAYER ID: " + id);
+		
 		System.out.println("Class = " + c);
  
                 // get all fields
@@ -50,5 +52,9 @@ public class Debugger {
 						+ fields[i].get(ob));
 			}
 		}
+		
+		System.out.println("####################################################################################################################");
+		System.out.println("####################################################################################################################");
+		
 	}
 }

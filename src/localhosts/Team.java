@@ -52,6 +52,16 @@ public class Team implements TeamInterface{
 		}
 	}
 	
+	/**public boolean checkPlayersRole(int[] playerIds, PlayerRole role){
+		boolean isInRole = false;
+		for (int i = 0; i < playerIds.length; i++) {
+			int id = playerIds[i];
+			
+		}
+		return true;
+		
+	}*/
+	
 	
 
 	public boolean checkPlayerRole(int playerId, PlayerRole role){
