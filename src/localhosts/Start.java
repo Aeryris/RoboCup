@@ -18,7 +18,7 @@ public class Start {
         loggers.add(LogManager.getRootLogger());
         for ( Logger logger : loggers ) {
             logger.setLevel(Level.OFF);
-        }
+        } 
         AbstractTeam team = null;
         if (args.length == 0) {
             team = new LocalhostsTeam(Config.teamName, Config.serverPort, Config.hostName, Config.hasCoach);
