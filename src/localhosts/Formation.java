@@ -25,6 +25,7 @@ public class Formation {
 	public void positionByPlayMode(PlayMode playMode, int playerId){
 		switch(playMode){
 		case BEFORE_KICK_OFF:
+			
 			this.beforeKickOff(playerId);
 			break;
 		}

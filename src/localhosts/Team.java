@@ -28,13 +28,25 @@ public class Team implements TeamInterface{
 	public HashMap<PlayerRole, int[]> teamRolePlayers = new HashMap<PlayerRole, int[]>();
 	
 	
-	
+	public static int closestPlayerToBall = 0;
+	private static double distanceToTheBall = 1000;
 	
 
 	protected Team() {
 		this.teamRolePlayers.put(PlayerRole.Attacker, new int[]{2, 3, 7, 8});
 		this.teamRolePlayers.put(PlayerRole.Defender, new int[]{9, 10, 11});
 		this.teamRolePlayers.put(PlayerRole.MidFielders, new int[]{4, 5, 6});
+	}
+	
+	public int playerIdClosestToBall(){
+		int id = 4;
+		for(Player p : players.values()){
+			System.out.println("p.ball.distance <= distanceToTheBall -> " + p.ball.distance + " -> id "+ p.playerId);
+			if(p.ball.distance <= distanceToTheBall && p.ball.distance != 0){
+				id = p.playerId;
+			}
+		}
+		return id;
 	}
 	
 	public void autoAssignPlayerRole(int playerId){
