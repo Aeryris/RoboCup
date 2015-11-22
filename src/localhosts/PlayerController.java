@@ -17,78 +17,126 @@ import com.github.robocup_atan.atan.model.enums.ViewAngle;
 import com.github.robocup_atan.atan.model.enums.ViewQuality;
 import com.github.robocup_atan.atan.model.enums.Warning;
 
+
+/*
+*
+* task environments and properties:
+* Partially-Observable, Multi agent, stochastic, sequential, dynamic, continuous
+* Agent Type: Footballer
+* Performance measure: scoring goals, defending their own goal against opponents
+* Environment: Football pitch
+* Actuators: kicking the ball, dashing, catching the ball (goalie), sending messages
+* Sensors: the players eyes, hearing messages from their team mates.
+* Agent program : Simple reflex
+* It is a simple reflex program because the agents mostly communicate by checking if statements to see the state of
+* the environment and the action they should take next
+*
+*/
 public class PlayerController implements ControllerPlayer {
 	
 	private ActionsPlayer player;
 	public String type;
 	private static Logger log = Logger.getLogger(PlayerController.class);
 	
+	/**
+	 * Team manager
+	 */
 	public static Team team = Team.getTeam();
 	
 	
 	/**
 	 * Direction
 	 */
-	private double ballDirection;
+	private double ballDirection; //Ball direction 
 	
 	/**
 	 * Distance
 	 */
-	private double ballDistance;
-	private double ownGoalDistance;
-	private double oponentGoalDistance;
+	private double ballDistance; //Ball distance
+	private double ownGoalDistance; //Distance to own goal 
+	private double oponentGoalDistance; //Distance to oppoent goal
 	
 	/**
 	 * See
 	 */
-	private boolean canSeeOwnGoal;
-	private boolean canSeeOponentGoal;
-	private boolean canSeeGoal;
-	private boolean canSeeBall;
-	private boolean canSeeNothing;
-	double canSeePlayerDirection;
+	private boolean canSeeOwnGoal; //See own goal
+	private boolean canSeeOponentGoal; //See opponent goal
+	private boolean canSeeGoal; //See any goal
+	private boolean canSeeBall; //See ball
+	private boolean canSeeNothing; //See nothing
+	double canSeePlayerDirection; //Can see own player, return direction
 	
+	/**
+	 * Before kickoff flag
+	 */
 	private boolean beforeKickOff = true;
 	
-	boolean canOpponentSide = true;
-	double opponentSideDistance;
-	double opponentSideDirection;
+	boolean canOpponentSide = true; //Can see opponent side
 	
-	boolean canSeeOwnSide = true;
-	double ownSideDistance;
-	double ownSideDirection;
+	double opponentSideDistance; //Distance to opponent side
+	double opponentSideDirection; //Direction to opponent side
 	
-	double opponentGoalDistance;
-	double ownPlayerDistance;
+	boolean canSeeOwnSide = true; //See own side
+	double ownSideDistance; //Distance to own side
+	double ownSideDirection; //Direction to own side
 	
-	boolean hasTheBall;
+	double opponentGoalDistance; //Distance to opponent goal 
+	double ownPlayerDistance; //Distance to own player
 	
-	boolean heardMessageStartChase;
+	boolean hasTheBall; //If player had the ball
+	 
+	boolean heardMessageStartChase; //Head message
 
-	double opponentGoalDirection;
+	double opponentGoalDirection;//Direction to opponents goal
 	
 	
-	SeeBall ballInfo = new SeeBall();
+	/**
+	 * Stores ball informations for easy access
+	 */
+	SeeBall ballInfo = new SeeBall(); 
 	
-	int[] seeOwnPlayers;
+	int[] seeOwnPlayers; //Ids of own player, that this.player can see
 	
-	double closestOwnPlayerDistance = 1000;
-	int closestOwnPlayerId = 0;
-	double closestOwnPlayerDirection = 0;
+	double closestOwnPlayerDistance = 1000; //Distance to the closest player
+	int closestOwnPlayerId = 0; //Player id of the closest player
+	double closestOwnPlayerDirection = 0; //Direction of the closest player
 	
-	int seeOwnPlayer = 0;
-	boolean bSeeOwnPlayer;
-	boolean canSeeOwnPlayer = false;
-	int numberOfOwnPlayerSearches = 0;
+	int seeOwnPlayer = 0; //If player can see own player, id of that player is stored here 
+	boolean bSeeOwnPlayer; //True if player can see own player
+	boolean canSeeOwnPlayer = false; //True if player can see own player 
 	
-	public static int cycle = 0;
+	int numberOfOwnPlayerSearches = 0; //How many times player searched for support
 	
-	public static int lookAroundCount = 0;
+	public static int cycle = 0; //Number of cycles
 	
-	public boolean someoneFromOwnTeamHasBall;
-	public int ownPlayerIdWithTheBall;
+	public static int lookAroundCount = 0; //How many times player looked around
 	
-	public boolean weHaveTheBall;
+	public boolean someoneFromOwnTeamHasBall; //True if the other team has the ball
+	public int ownPlayerIdWithTheBall; //Player id with the ball 
+	
+	public boolean weHaveTheBall; //True if we have the ball 
+	/*
+	 * Variables for the defenders to query in the goal flags 
+	 * they end up in temp variables so that the direction they are supposed to go in doesnt
+	 * change into something else and have them stuck in the turnAndGoToGoal method
+	 */
+    private double closestOpponentDistance = 0;
+    private double closestOpponentDirection = 0;
+    private double otherPlayerDirection = 0;
+    private boolean canSeeOtherPlayer = false;
+    private double ownGoalDirection = 0;
+    private double ownPenaltyDirection ;
+    private double ownPenaltyDistance ;
+    private double defendGoalDirection;
+    private double defendGoalDistance;
+    private double player11GoalDirection;
+    private double player11GoalDistance;
+    private double player10GoalDirection;
+    private double player10GoalDistance;
+    private double player9GoalDirection;
+    private double player9GoalDistance;
+    private double centerDistance;
+    private double centerDirection;
 
 	@Override
 	public void preInfo() {
@@ -120,78 +168,468 @@ public class PlayerController implements ControllerPlayer {
 		try {
 			int playerId = this.getPlayer().getNumber();
 			
-			//System.out.println("Closest to the ball: " + team.playerIdClosestToBall());
-			
-			//if()
-			
-			//if(team.playerIdClosestToBall() == getPlayer().getNumber()){
-			//	runForBall();
-			//}
-			
-			if(team.get(playerId).getRole() == PlayerRole.Attacker 
-					&& (
-							getPlayer().getNumber() == 3
-							||
-							getPlayer().getNumber() == 2
-					   )
-					 || getPlayer().getNumber() == 4){
+			/**
+	            * If current player is defender perform following set of rules 
+	            */
+            if(team.get(playerId).getRole() == PlayerRole.Defender)
+            {
+                    if(
+                                    getPlayer().getNumber() != 10
+                                    ||
+                                    getPlayer().getNumber() !=11
+                       
+                     || getPlayer().getNumber() != 9){
+           
+                    	/**
+                    	 * If player can see the ball
+                    	 */
+                            if(canSeeBall)
+                            {
+                                    System.out.println("Defender" + "" + playerId + "" + "canSeeBall");
+                                    
+                                    /**
+                                     * Try to get the ball
+                                     */
+                                    getPlayer().turn(ownGoalDirection);
+                                    getPlayer().dash(100);
+                                    //turnAndGoToGoal();
+                                   
+                                    /**
+                                     * If the player has the ball
+                                     */
+                                    if(hasTheBall() && ownPlayerIdWithTheBall == getPlayer().getNumber()){
+                                   
+                                    System.out.println("HasTheBall");
+                                    /**
+                                     * If the player is on own side
+                                     */
+                                    if(isOnOwnSide()){
+                                            System.out.println("isOnOwnSide");
+                                            /**
+                                             * If player is facing own goal
+                                             */
+                                            if(isFacingOwnGoal()){
+                                            	/**
+                                            	 * if player is facing own goal kick the ball in opposite direction
+                                            	 */
+                                                    getPlayer().kick(100, -ownSideDirection);
+                                            }else{
+                                            	/**
+                                            	 * If player can see any supporting players
+                                            	 */
+                                                    if(seeOwnSupportPlayer()){
+                                                    	/**
+                                                    	 * If the ball is in a kickable distance
+                                                    	 */
+                                                            if(ballInKickableDistance()){
+                                                            	/**
+                                                            	 * Pass to the support player
+                                                            	 */
+                                                                    passBallToSupport();
+                                                            }else{
+                                                            	/**
+                                                            	 * Kick in opponents side direction 
+                                                            	 */
+                                                                    getPlayer().kick(100,opponentSideDirection);
+                                                            }
+                                                    }else{
+                                                    	/**
+                                                    	 * Look around for support and pass
+                                                    	 */
+                                                            lookAroundAndPassToSupport();
+                                                            /**
+                                                             * Turn back to defend the goal
+                                                             */
+                                                            turnAndGoToGoal();
+                                                    }
+                                            }
+                           
+                    }
+                                    /**
+                                     * If player is on opponents die
+                                     */
+                                    else if(isOnOpponentSide()){
+                                            System.out.println("isOnOpponentSide");
+                                            /**
+                                             * If player can see any supporting player
+                                             */
+                                            if(seeOwnSupportPlayer()){
+                                                            System.out.println("seeOwnSupportPlayer");
+                                                            if(ballInKickableDistance()){
+                                                                    passBallToSupport();
+                                                            }else{
+                                                                    //dribbleInDirection(opponentSideDirection);
+                                                                    getPlayer().kick(50, -opponentSideDirection);
+                                                                    turnAndGoToGoal();
+                                                            }
+                                                    }else{
+                                                    	/**
+                                                    	 * Look around for supporting player and pass to the 
+                                                    	 */
+                                                            System.out.println("lookAroundAndPassToSupport");
+                                                            lookAroundAndPassToSupport();
+                                                            /**
+                                                             * Go back to the defending position
+                                                             */
+                                                            turnAndGoToGoal();
+                                                    }
+                                                    //dribbleInDirection(opponentGoalDirection);
+                                            }
+                                           
+                                           
+                                    }
+            }
+                            else{
+                                 
+                            	/**
+                            	 * Try to find anything useful, ball, or own player
+                            	 */
+                                    lookAround();
+                                    /**
+                                     * If can see own support player
+                                     */
+                                    if(seeOwnSupportPlayer()){
+                                            System.out.println("seeOwnSupportPlayer");
+                                            /**
+                                             * Kick the ball to the support if the ball is in a kickable distance
+                                             */
+                                            if(ballInKickableDistance()){
+                                            	/**
+                                            	 * Pass the ball to the support
+                                            	 */
+                                                    passBallToSupport();
+                                            }else{
+                                            	/**
+                                            	 * Go back to defent the goal
+                                            	 */
+                                                    turnAndGoToGoal();
+                                            }
+                                    }
+                                   
+                            }
+                    }else  {
+                    	/**
+                    	 * Go back to defend the goal
+                    	 */
+                            turnAndGoToGoal();
+                            /**
+                             * Look around for attacks
+                             */
+                            lookAround();
+           
+                    }
+                   
+            }
+                   
+            /**
+             * If current player is midfielder perform following set of rules 
+             */
+            else if(team.get(playerId).getRole() == PlayerRole.MidFielders
+            && (getPlayer().getNumber() == 4 || getPlayer().getNumber() == 5)
+            || getPlayer().getNumber() == 6)
+            {
+
+                    System.out.println("ownPlayerIdWithTheBall -> "+ ownPlayerIdWithTheBall + " -> " + getPlayer().getNumber());
+   
+           
+                   /**
+                    * If player can see the ball
+                    */
+                    if(canSeeBall){
+                    	/**
+                    	 * If the player has the ball
+                    	 */
+                            if(hasTheBall() && ownPlayerIdWithTheBall == getPlayer().getNumber()){
+                                   
+                                    System.out.println("hasTheBall");
+                                    /**
+                                     * If the player is on own side 
+                                     */
+                                    if(isOnOwnSide()){
+                                            System.out.println("isOnOwnSide");
+                                            /**
+                                             * if the player is facing own goal
+                                             */
+                                            if(isFacingOwnGoal()){
+                                            	/**
+                                            	 * Kick in opposite direction if true
+                                            	 */
+                                                    getPlayer().kick(100, -ownSideDirection);
+                                            }else{
+                                            	/**
+                                            	 * If not try to find support 
+                                            	 */
+                                                    if(seeOwnSupportPlayer()){
+                                                    	/**
+                                                    	 * If support is found check if the ball is in a kickable distance
+                                                    	 */
+                                                            if(ballInKickableDistance()){
+                                                            	/**
+                                                            	 * Pass to the support
+                                                            	 */
+                                                                    passBallToSupport();
+                                                            }else{
+                                                            	/**
+                                                            	 * Dribble the ball to oppoent direction
+                                                            	 */
+                                                                    dribbleInDirection(opponentSideDirection);
+                                                            }
+                                                    }else{
+                                                    	/**
+                                                    	 * Find support team member and pass the ball
+                                                    	 */
+                                                            lookAroundAndPassToSupport();
+                                                            /**
+                                                             * Return 
+                                                             */
+                                                            returnToCenter();
+                                                            lookAround();
+                                                    }
+                                            }
+                                           
+                                            /**
+                                             * If the player is on opposite side
+                                             */
+                                    }else if(isOnOpponentSide()){
+                                            System.out.println("isOnOpponentSide");
+                                            /**
+                                             * if the player is close to oppoent goal
+                                             */
+                                            if(isCloseToOpponentGoal()){
+                                                    System.out.println("isCloseToOpponentGoal");
+                                                    /**
+                                                     * if the ball is in a kickable distance
+                                                     */
+                                                    if(ballInKickableDistance()){
+                                                    	/**
+                                                    	 * Try to score
+                                                    	 */
+                                                            kickInGoalDirection();
+                                                    }else{
+                                                           /**
+                                                            * Find support team members
+                                                            */
+                                                            lookAroundAndPassToSupport();
+                                                            System.out.println("RunForBall");
+                                                            /**
+                                                             * Run for the ball
+                                                             */
+                                                            runForBall();
+                                                    }
+                                                   
+                                            }else{
+                                            	/**
+                                            	 * If can see own supporting player
+                                            	 */
+                                                    if(seeOwnSupportPlayer()){
+                                                            System.out.println("seeOwnSupportPlayer");
+                                                            /**
+                                                             * If ball if in a kickable distance
+                                                             */
+                                                            if(ballInKickableDistance()){
+                                                            	/**
+                                                            	 * Pass to support player if true
+                                                            	 */
+                                                                    passBallToSupport();
+                                                            }else{
+                                                            	/**
+                                                            	 * Dribble in opponents side direction
+                                                            	 */
+                                                                    dribbleInDirection(opponentSideDirection);
+                                                            }
+                                                    }else{
+                                                            System.out.println("lookAroundAndPassToSupport");
+                                                            /**
+                                                             * Look around for support and pass
+                                                             */
+                                                            lookAroundAndPassToSupport();
+                                                           
+                                                    }
+                                                    //dribbleInDirection(opponentGoalDirection);
+                                            }
+                                           
+                                           
+                                    }else{
+                                            System.out.println("Else");
+                                            /**
+                                             * If can see own support player
+                                             */
+                                            if(seeOwnSupportPlayer()){
+                                                    System.out.println("seeOwnSupportPlayer");
+                                                    /**
+                                                     * Check if can kick the ball
+                                                     */
+                                                    if(ballInKickableDistance()){
+                                                    	/**
+                                                    	 * Pass the ball to the team member
+                                                    	 */
+                                                            passBallToSupport();
+                                                    }else{
+                                                    	/**
+                                                    	 * Dirbble in opponents direction
+                                                    	 */
+                                                            dribbleInDirection(opponentSideDirection);
+                                                    }
+                                            }else{
+                                                    System.out.println("lookAroundAndPassToSupport");
+                                                    /**
+                                                     * Look for support and pass
+                                                     */
+                                                    lookAroundAndPassToSupport();
+                                                   
+                                            }
+                                    }
+                                   
+                                   
+                                   
+                            }else{
+                                  
+                                    System.out.println("No Ball -> runBall");
+                                    /**
+                                     * Get the ball
+                                     */
+                                    runForBall();
+                            }
+                           
+                           
+                           
+                    }else{
+                           
+                    	/**
+                    	 * Return to initial position 
+                    	 */
+                            returnToCenter();
+                            
+                            /**
+                             * Look around
+                             */
+                            lookAround();
+                            /**
+                             * Try to get the ball if the ball is in sight
+                             */
+                            findTheBallAndGetIt();
+                           
+                           
+                           
+                           
+                           
+                    }
+            }
+             
+           /**
+            * If current player is attacker perform following set of rules 
+            */
+            else if(team.get(playerId).getRole() == PlayerRole.Attacker){
 				
 				
 				System.out.println("ownPlayerIdWithTheBall -> "+ ownPlayerIdWithTheBall + " -> " + getPlayer().getNumber());
 				
-				/* if(ownPlayerIdWithTheBall != getPlayer().getNumber()){
-					//runInDirection(opponentSideDirection);
-					supportPlayerWithBall();
-				} */
 				
-				
+				/**
+				 * Check if player can see the ball
+				 */
 				if(canSeeBall){
-					
-					
-					
-					
-					if(hasTheBall() && ownPlayerIdWithTheBall == getPlayer().getNumber()){
+
+					/**
+					 * Check if player has the ball, otherwise look and run for it 
+					 */
+					if(hasTheBall()){
 						
 						System.out.println("hasTheBall");
+						/**
+						 * Check if the player is on own side of the pitch 
+						 */
 						if(isOnOwnSide()){
 							System.out.println("isOnOwnSide");
+							/**
+							 * Check if player is facing own goal, if yes kick in opposite direction
+							 */
 							if(isFacingOwnGoal()){
 								getPlayer().kick(100, -ownSideDirection);
 							}else{
+								/**
+								 * Check if player can see any support from own team
+								 */
 								if(seeOwnSupportPlayer()){
+									/**
+									 * Check if ball is in a kickable distance, if yes, pass it to the support player
+									 * if not dribble in opponent side direction
+									 */
 									if(ballInKickableDistance()){
+										/**
+										 * Pass to closest support player
+										 */
 										passBallToSupport();
 									}else{
+										/**
+										 * Dribble to opponents side
+										 */
 										dribbleInDirection(opponentSideDirection);
 									}
 								}else{
+									/**
+									 * Find support player and pass
+									 */
 									lookAroundAndPassToSupport();
 								}
 							}
 							
+						/**
+						 * Check if player is on the opponent side 	
+						 */
 						}else if(isOnOpponentSide()){
 							System.out.println("isOnOpponentSide");
+							/**
+							 * Check if player is close to the opponent goal 
+							 */
 							if(isCloseToOpponentGoal()){
 								System.out.println("isCloseToOpponentGoal");
+								/**
+								 * Check if ball is in a kickable distance, if yes try to score, if not find support player and pass
+								 * and run towards the ball
+								 */
 								if(ballInKickableDistance()){
 									kickInGoalDirection();
 								}else{
-									
+									/**
+									 * Look for support player
+									 */
 									lookAroundAndPassToSupport();
 									System.out.println("RunForBall");
+									/**
+									 * Run for the ball
+									 */
 									runForBall();
 								}
 								
 							}else{
+								/**
+								 * Check if player can see support player 
+								 */
 								if(seeOwnSupportPlayer()){
 									System.out.println("seeOwnSupportPlayer");
+									/**
+									 * If ball is in a kickable distance pass the ball to the support 
+									 */
 									if(ballInKickableDistance()){
+										/**
+										 * Pass to the support player
+										 */
 										passBallToSupport();
 									}else{
+										/**
+										 * Otherwise dribble on opponents side direction
+										 */
 										dribbleInDirection(opponentSideDirection);
 									}
+								/**
+								 * Look around for support player	
+								 */
 								}else{
 									System.out.println("lookAroundAndPassToSupport");
+									/**
+									 * Look around and pass to support player
+									 */
 									lookAroundAndPassToSupport();
 									
 								}
@@ -200,16 +638,33 @@ public class PlayerController implements ControllerPlayer {
 							
 							
 						}else{
-							System.out.println("Else");
+							/**
+							 * Check if player can see support player 
+							 */
 							if(seeOwnSupportPlayer()){
 								System.out.println("seeOwnSupportPlayer");
+								/**
+								 * If ball is in a kickable distance pass the ball to the support 
+								 */
 								if(ballInKickableDistance()){
+									/**
+									 * Pass to the support player
+									 */
 									passBallToSupport();
 								}else{
+									/**
+									 * Otherwise dribble on opponents side direction
+									 */
 									dribbleInDirection(opponentSideDirection);
 								}
+								/**
+								 * Look around for support player	
+								 */	
 							}else{
 								System.out.println("lookAroundAndPassToSupport");
+								/**
+								 * Look around and pass to support player
+								 */
 								lookAroundAndPassToSupport();
 								
 							}
@@ -220,7 +675,9 @@ public class PlayerController implements ControllerPlayer {
 					}else{
 						
 						
-						
+						/**
+						 * Try to get the ball
+						 */
 						System.out.println("No ball -> runForBall");
 						runForBall();
 					}
@@ -228,6 +685,9 @@ public class PlayerController implements ControllerPlayer {
 					
 					
 				}else{
+					/**
+					 * Look around for the ball
+					 */
 					lookAround();
 					
 					
@@ -254,11 +714,18 @@ public class PlayerController implements ControllerPlayer {
 
 	}
 	
+	/**
+	 * If own player has the ball, run towards opponents goal to support him
+	 */
 	public void supportPlayerWithBall(){
 		getPlayer().turn(opponentSideDirection);
 		getPlayer().dash(30);
 	}
 	
+	/**
+	 * Check whether own player is facing own goal
+	 * @return
+	 */
 	public boolean isFacingOwnGoal(){
 		if(canSeeOwnGoal){
 			return true;
@@ -267,6 +734,9 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Look around for supporting own player for 2 times, if distance between own support player is greater than 10, pass if not dribble towards opponents goal
+	 */
 	public void lookAroundAndPassToSupport(){
 		System.out.println("lookAroundCount -> " + lookAroundCount);
 		if(lookAroundCount < 2){
@@ -283,18 +753,27 @@ public class PlayerController implements ControllerPlayer {
 		}
 	}
 	
-	
+	/**
+	 * Kick the ball in the opponents goal direction
+	 */
 	public void kickInGoalDirection(){
 		System.out.println("kickInGoalDirection -> " + opponentGoalDirection);
 		//getPlayer().turn(opponentGoalDirection);
 		getPlayer().kick(100, opponentGoalDirection);
 	}
 	
+	/**
+	 * Pass the ball to the own support player
+	 */
 	public void passBallToSupport(){
 		getPlayer().turn(canSeePlayerDirection);
 		getPlayer().kick(100, canSeePlayerDirection);
 	}
 	
+	/**
+	 * Check whether player is close to the goal ( < 15 ), is yes return true
+	 * @return boolean
+	 */
 	public boolean shouldTryToScoreGoal(){
 		if(canOpponentSide && opponentGoalDistance < 15){
 			return true;
@@ -303,6 +782,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Check if player is close to the opponents goal
+	 * @return boolean
+	 */
 	public boolean isCloseToOpponentGoal(){
 		if(canOpponentSide && opponentGoalDistance < 20){
 			return true;
@@ -311,6 +794,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Checks whether is close to own goal 
+	 * @return boolean
+	 */
 	public boolean isCloseToOwnGoal(){
 		if(canSeeOwnSide && ownGoalDistance < 25){
 			return true;
@@ -319,6 +806,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Checks whether player is on own side of the pitch, (if can see own side and the distance is < 50)
+	 * @return boolean
+	 */
 	public boolean isOnOwnSide(){
 		if(canSeeOwnSide && ownSideDistance < 50){
 			return true;
@@ -327,6 +818,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Checks whether player is on opponents side of the pitch, (if can see opponent side and the distance is < 50)
+	 * @return boolean
+	 */
 	public boolean isOnOpponentSide(){
 		if(canOpponentSide && opponentSideDistance < 50){
 			return true;
@@ -334,6 +829,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Checks whether player has the ball ( distance to the ball is <= 1.9)
+	 * @return
+	 */
 	public boolean hasTheBall(){
 		if(ballDistance <= 1.9){
 			ownPlayerIdWithTheBall = getPlayer().getNumber();
@@ -345,6 +844,9 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Look around to try to find the ball, if player can see it, run for the ball
+	 */
 	public void findTheBallAndGetIt(){
 		if(canSeeBall){
 			runForBall();
@@ -353,11 +855,17 @@ public class PlayerController implements ControllerPlayer {
 		}
 	}
 	
+	/**
+	 * Look around
+	 */
 	public void lookAround(){
 		getPlayer().turn(40);
 		lookAroundCount++;
 	}
 	
+	/**
+	 * Dash in the ball direction
+	 */
 	public void runForBall(){
 		System.out.println("BallDistance -> " + ballDistance);
 		//if(ballDistance > 2){
@@ -366,6 +874,10 @@ public class PlayerController implements ControllerPlayer {
 		//}
 	}
 	
+	/**
+	 * Checks whether player can see opponent side of the pitch, (if can see opponent side and the distance is > 45)
+	 * @return boolean
+	 */
 	public boolean seeOpponentSide(){
 		if (canOpponentSide && opponentGoalDistance > 45){
 			return true;
@@ -373,6 +885,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Checks whether player is on own side of the pitch, (if can see own side and the distance is < 50)
+	 * @return boolean
+	 */
 	public boolean seeOwnSide() {
 		if (canSeeOwnSide && ownGoalDistance < 50) {
 			return true;
@@ -380,6 +896,10 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Check whether player can see any own player 
+	 * @return boolean
+	 */
 	public boolean seeOwnSupportPlayer(){
 		if(bSeeOwnPlayer){
 			
@@ -388,6 +908,9 @@ public class PlayerController implements ControllerPlayer {
 		return false;
 	}
 	
+	/**
+	 * Look around for support player
+	 */
 	public void lookForSupport(){
 		if(!bSeeOwnPlayer){
 			numberOfOwnPlayerSearches++;
@@ -397,11 +920,19 @@ public class PlayerController implements ControllerPlayer {
 		}
 	}
 	
+	/**
+	 * Run in the given direction
+	 * @param direction
+	 */
 	public void runInDirection(double direction){
 		getPlayer().turn(direction);
 		getPlayer().dash(100);
 	}
 	
+	/**
+	 * Slowly dribble in the given direction 
+	 * @param direction
+	 */
 	public void dribbleInDirection(double direction){
 		getPlayer().turn(direction);
 		getPlayer().kick(40, direction);
@@ -422,6 +953,13 @@ public class PlayerController implements ControllerPlayer {
 		}
 	}
 	
+	/**
+	 * Look for the player with number
+	 * @param seePlayerId
+	 * @param playerToLookFor
+	 * @param whoShouldLook
+	 * @return
+	 */
 	public double lookForPlayer(int seePlayerId, int playerToLookFor, int whoShouldLook){
 		System.out.println("LookForPlayer: " + seePlayerId + " -> " + playerToLookFor + " -> " + whoShouldLook);
 		if(getPlayer().getNumber() == whoShouldLook){
@@ -436,6 +974,9 @@ public class PlayerController implements ControllerPlayer {
 		return 0;
 	}
 	
+	/**
+	 * Try to get the ball
+	 */
 	public void getTheBall(){
 		turnTowardsBall();
 		getPlayer().dash(100);
@@ -448,78 +989,100 @@ public class PlayerController implements ControllerPlayer {
 		}
 	}
 	
+	//Used by midfielders to run around the center area based on the center flag
+    
+    private void returnToCenter()
+    {
+            lookAround();
+            getPlayer().turn(centerDirection);
+            getPlayer().dash(60);
+            if(isOnOwnSide()){
+                    getPlayer().turn(opponentSideDirection);
+            }
+            runForBall();
+    }
+    // for the defenders to mark their goal area
+    /*
+     * they check where the goal area is and run to it, if they see a player from another team with the
+     * ball they attempt to get it and defend their area
+     */
+    private void turnAndGoToGoal()
+    {
+
+            //lookAround();
+
+            double temp1 = player9GoalDistance;
+            double temp2 = player10GoalDistance;
+            double temp3 = player11GoalDistance;
+            if(getPlayer().getNumber() == 9){
+                    getPlayer().turn(temp1);
+                    getPlayer().dash(100);
+                    if(isCloseToOwnGoal()){
+                            getPlayer().turn(opponentSideDirection);
+                    }
+                   
+                   
+            }
+            else if(getPlayer().getNumber() == 10){
+                    getPlayer().turn(temp2);
+                    getPlayer().dash(100);
+                    if(isCloseToOwnGoal()){
+                            getPlayer().turn(opponentSideDirection);
+                    }
+                   
+            }
+            else if(getPlayer().getNumber() == 11){
+                    getPlayer().turn(temp3);
+                    getPlayer().dash(100);
+                    if(isCloseToOwnGoal()){
+                            getPlayer().turn(opponentSideDirection);
+                    }
+            }
+
+            if((isCloseToOwnGoal()) && (canSeeBall) && (canSeeOtherPlayer))
+            {
+                    defendGoalAction();
+            }
+           
+            getPlayer().turn(opponentSideDirection);
+   
+           
+           
+    }
+   
+    //defenders can use this to get the ball away from their area
+   
+    private void defendGoalAction() {
+    getPlayer().turn(ballDirection);
+    int tempDash = (int) ballDirection;
+    getPlayer().dash(tempDash);
+    if (ballInKickableDistance()) {
+        getPlayer().kick(100, (opponentSideDirection));            
+    }
+
+}
+	
+	/**
+	 * Kick ball towards given direction
+	 * @param playerId
+	 * @param direction
+	 * @param power
+	 */
 	public void kickTowards(int playerId, double direction, int power){
 		if(ballInfo.distance < 0.7 && ballInfo.distance != 0.0){
-			//getPlayer().kick(power, direction);
+			getPlayer().kick(power, direction);
 			System.out.println("KickTowards "+ playerId + " dir: " + direction + " power: " + power);
 		}
 	}
 	
+	/**
+	 * Turn towards the ball direction
+	 */
 	public void turnTowardsBall(){
 		System.out.println("TurnTowardsBall: " + ballInfo.direction);
 		getPlayer().turn(ballInfo.direction);
 	}
 	
-	private void postInfoAttackers(){
-		
-		int playerId = this.getPlayer().getNumber();
-		
-		System.out.println("#####################################################");
-		System.out.println("#####################################################");
-		System.out.println("#####################################################");
-		System.out.println(team.lastPlayerIdSeenBall);
-		System.out.println("#####################################################");
-		System.out.println("#####################################################");
-		System.out.println("#####################################################");
-		
-		
-		if(team.get(playerId).getBall() == null){
-			System.out.println("####################################################################################GET BALL NULL" + playerId);
-			//return;
-		}
-		
-		if(playerId == 8){
-			
-			//System.out.println("####DISTANCE8: " + team.get(playerId).getBall().distance);
-			team.get(playerId).getController().getPlayer().dash(55);
-			team.get(playerId).getController().getPlayer().turn(team.get(playerId).getBall().direction);
-			if(team.get(playerId).getBall().distance < 1){
-				
-				team.get(playerId).getController().getPlayer().kick(100, -80);
-				team.get(playerId).getController().getPlayer().dash(0);
-			}else{
-				
-			}
-		}
-		
-		//Middle attacker
-		if(playerId == 4){
-			
-			
-			//System.out.println("####DISTANCE4: " + team.get(playerId).getBall().distance);
-			if(team.get(playerId).getBall().distance < 1){
-				team.get(playerId).getController().getPlayer().kick(100, -90);
-				team.get(playerId).getController().getPlayer().dash(0);
-			}else{
-				team.get(playerId).getController().getPlayer().dash(100);
-			}
-			
-			
-			
-		}
-		
-		
-	}
-	
-	private void postInfoDefenders(){
-		
-	}
-	
-	private void postInfoMidFielders(){
-		
-	}
-	
-
 	@Override
 	public ActionsPlayer getPlayer() {
 		return this.player;
@@ -568,14 +1131,6 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagOther(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-//		if(getPlayer().getNumber() == 4 
-//				|| getPlayer().getNumber() == 3 || getPlayer().getNumber() == 2)
-//		System.out.println("CanSeeFlag PlayerId: " + getPlayer().getNumber() + " -> " + flag);
-//		
-		
-		//canSeeOwnSide = true;
-		//ownSideDistance = distance;
-		//ownSideDirection = direction;
 		
 		canOpponentSide = true;
 		canSeeOwnSide = false;
@@ -591,7 +1146,17 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagCenter(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		//queried by the midfielders
+        if(getPlayer().getNumber() == 4
+                        ||
+                        getPlayer().getNumber() == 5
+                        ||
+                        getPlayer().getNumber() == 6){
+        canOpponentSide = true;
+        canSeeOwnSide = true;
+        centerDistance = distance;
+        centerDirection = direction;
+        }
 	}
 
 	@Override
@@ -612,7 +1177,18 @@ public class PlayerController implements ControllerPlayer {
 	public void infoSeeFlagPenaltyOwn(Flag flag, double distance, double direction, double distChange, double dirChange,
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
+		//for the defenders
+        if(getPlayer().getNumber() == 9
+                        ||
+                        getPlayer().getNumber() == 10
+                        ||
+                        getPlayer().getNumber() == 11){
+        canSeeOwnSide = true;
+        canSeeGoal = true;
+        canOpponentSide = false;
+        ownPenaltyDistance = distance;
+        ownPenaltyDirection  = direction;
+        }
 	}
 
 	@Override
@@ -627,8 +1203,26 @@ public class PlayerController implements ControllerPlayer {
 			double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
 		canSeeOwnSide = true;
-		canOpponentSide = false;
-		ownGoalDistance = distance;
+        canSeeGoal = true;
+        canOpponentSide = false;
+        ownGoalDistance = distance;
+        ownGoalDirection  = direction;
+
+		if(getPlayer().getNumber() == 9)
+        {
+                player9GoalDistance = distance;
+                player9GoalDirection = direction;
+        }
+        else if(getPlayer().getNumber() == 10)
+        {
+                player10GoalDistance = distance;
+                player10GoalDirection = direction;
+        }
+        else if(getPlayer().getNumber() == 11)
+        {
+                player11GoalDistance = distance;
+                player11GoalDirection = direction;
+        }
 	}
 
 	@Override
@@ -640,10 +1234,6 @@ public class PlayerController implements ControllerPlayer {
 		canSeeOwnSide = false;
 		opponentGoalDistance = distance;
 		opponentGoalDirection = direction;
-//		if(getPlayer().getNumber() == 4 
-//		|| getPlayer().getNumber() == 3 || getPlayer().getNumber() == 2)
-//System.out.println("CanSeeFlag PlayerId: " + getPlayer().getNumber() + " -> " + flag + " --> " + distance);
-
 	}
 
 	@Override
@@ -658,15 +1248,23 @@ public class PlayerController implements ControllerPlayer {
 			double dirChange, double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
 		System.out.println("OtherPlayer: " + number);
+		System.out.println("OtherPlayer: " + number);
+	       
+        if (distance < closestOpponentDistance )
+        {
+                closestOpponentDistance = distance;
+                closestOpponentDirection = direction;
+        }
+       
+        otherPlayerDirection = direction;
+        canSeeOtherPlayer = true;
 	}
 
 	@Override
 	public void infoSeePlayerOwn(int number, boolean goalie, double distance, double direction, double distChange,
 			double dirChange, double bodyFacingDirection, double headFacingDirection) {
 		// TODO Auto-generated method stub
-		
-		//closestOwnPlayerDistance = 1000;
-		//closestOwnPlayerId = number;
+
 		if(distance < closestOwnPlayerDistance){
 			closestOwnPlayerDistance = distance;
 			closestOwnPlayerId = number;
@@ -678,23 +1276,9 @@ public class PlayerController implements ControllerPlayer {
 		canSeePlayerDirection = direction;
 		canSeeOwnPlayer = true;
 		ownPlayerDistance = distance;
-		
-		if(getPlayer().getNumber() == 4){
-			//System.out.println("CanSeeOwnPlayer: 4 -> " + number);
-		}
-		
-		//if(ballInfo.distance < 0.7 && ballInfo.distance != 0.0)
-		//	getPlayer().kick(100, direction);
-	    
-		
-		
-		
-		
-		
+
 		int playerId = getPlayer().getNumber();
-		//if(playerId == 4)
-		//	System.out.println("SeeOwnPlayer: " + playerId +  " -> " + number + " = " + distance + " ~ " + direction);
-		
+
 		/**
 		 * [*]
 		 * [1]
@@ -736,48 +1320,6 @@ public class PlayerController implements ControllerPlayer {
 		ball.headFacingDirection = headFacingDirection;
 		team.get(playerId).setSeeBall(ball);
 		
-		
-		/**
-		int playerId = this.getPlayer().getNumber();
-		
-		canSeeBall = true;
-		
-		ballInfo.distance = distance;
-		ballInfo.direction = direction;
-		ballInfo.distChange = distChange;
-		ballInfo.dirChange = dirChange;
-		ballInfo.bodyFacingDirection = bodyFacingDirection;
-		ballInfo.headFacingDirection = headFacingDirection;
-		
-		this.ballDirection = direction;
-		this.ballDistance = distance;]
-		*/
-		/*
-		
-		
-		SeeBall ball;
-		
-		if(team.get(playerId).getBall() == null){
-			ball = new SeeBall();
-		}else{
-			ball = team.get(playerId).getBall();
-		}
-		
-		
-		ball.distance = distance;
-		ball.direction = direction;
-		ball.distChange = distChange;
-		ball.dirChange = dirChange;
-		ball.bodyFacingDirection = bodyFacingDirection;
-		ball.headFacingDirection = headFacingDirection;
-		
-		ballInfo = ball;
-		team.get(playerId).setSeeBall(ball);
-		//team.get(playerId).canSeeBall = true;
-		 * 
-		 */
-		
-		//team.lastPlayerIdSeenBall = playerId;	
 		
 	}
 
@@ -837,9 +1379,6 @@ public class PlayerController implements ControllerPlayer {
 	@Override
 	public void infoHearPlayer(double direction, String message) {
 		// TODO Auto-generated method stub
-		
-		//Messages.inbox().hear(this.getPlayer().getNumber(), message);
-		//team.hear(this.getPlayer().getNumber(), message);
 		
 		if(message.equals("p9"))
 			heardMessageStartChase = true;
